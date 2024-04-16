@@ -1,0 +1,267 @@
+nameOverride: prometheus-operator
+
+defaultRules:
+  create: false
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    nodeSelector:
+      eks.amazonaws.com/nodegroup: monitoring
+      kubernetes.io/arch: arm64
+    tolerations:
+      - key: system-type
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+      - key: arch-type
+        operator: Equal
+        value: arm
+        effect: NoSchedule
+
+grafana:
+  enabled: true
+  adminPassword: yieon!23#
+  grafana.ini:
+    server:
+      root_url: https://dev.grafana.yieon.com
+    smtp:
+      enabled: true
+      host: smtp-mail.cloud.toast.com:465
+      user: SMTP_USER
+      password: SMTP_PASSWORD
+      skip_verify: true
+      from_address: devops@yieon.com
+      from_name: Grafana Yieon
+  persistence:
+    enabled: true
+    existingClaim: pvc-grafana
+  additionalDataSources:
+    - name: Thanos
+      type: prometheus
+      uid: thanos
+      url: http://thanos-query:9090
+      access: proxy
+  ingress:
+    enabled: true
+    annotations: {
+      kubernetes.io/ingress.class: alb,
+      alb.ingress.kubernetes.io/group.name: "dev-prometheus-alb",
+      alb.ingress.kubernetes.io/subnets: "subnet-XXXXXXXXXXXXXXXXX",
+      alb.ingress.kubernetes.io/inbound-cidrs: "10.0.0.0/32",
+      alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}',
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]',
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:XXXXXXXXXXXX:certificate/YOUR_CERTIFICATE,
+      alb.ingress.kubernetes.io/healthcheck-path: "/api/health",
+      alb.ingress.kubernetes.io/success-codes: "200,404",
+      alb.ingress.kubernetes.io/scheme: internet-facing,
+      alb.ingress.kubernetes.io/target-type: 'ip',
+      alb.ingress.kubernetes.io/ssl-redirect: '443',
+      alb.ingress.kubernetes.io/tags: "chapter=devops,environment=dev,service=prometheus"
+    }
+    hosts:
+      - dev.grafana.yieon.com
+    paths:
+      - "/*"
+  env:
+    TZ: "Asia/Seoul"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - ap-northeast-2a
+            - key: eks.amazonaws.com/nodegroup
+              operator: In
+              values:
+                - monitoring
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+                - arm64
+  tolerations:
+    - key: system-type
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+    - key: arch-type
+      operator: Equal
+      value: arm
+      effect: NoSchedule
+  assertNoLeakedSecrets: false
+
+kubeApiServer:
+  enabled: false
+
+kubelet:
+  enabled: true
+
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: true
+kubeDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: true
+kube-state-metrics:
+  extraArgs:
+    - '--metric-labels-allowlist=*=[*]'
+  nodeSelector:
+    eks.amazonaws.com/nodegroup: monitoring
+    kubernetes.io/arch: arm64
+  tolerations:
+    - key: system-type
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+    - key: arch-type
+      operator: Equal
+      value: arm
+      effect: NoSchedule
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+  serviceMonitor:
+    selfMonitor: false
+  nodeSelector:
+    eks.amazonaws.com/nodegroup: monitoring
+    kubernetes.io/arch: arm64
+  tolerations:
+    - key: system-type
+      operator: Equal
+      value: monitoring
+      effect: NoSchedule
+    - key: arch-type
+      operator: Equal
+      value: arm
+      effect: NoSchedule
+
+prometheus:
+  enabled: true
+
+  service:
+    type: NodePort
+    nodePort: 32010
+
+  ingress:
+    enabled: true
+    annotations: {
+      kubernetes.io/ingress.class: alb,
+      alb.ingress.kubernetes.io/group.name: "dev-prometheus-alb",
+      alb.ingress.kubernetes.io/subnets: "subnet-XXXXXXXXXXXXXXXXX",
+      alb.ingress.kubernetes.io/inbound-cidrs: "10.0.0.0/32",
+      alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}',
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]',
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:XXXXXXXXXXXX:certificate/YOUR_CERTIFICATE,
+      alb.ingress.kubernetes.io/healthcheck-path: "/-/healthy",
+      alb.ingress.kubernetes.io/success-codes: "200,404",
+      alb.ingress.kubernetes.io/scheme: internet-facing,
+      alb.ingress.kubernetes.io/target-type: 'ip',
+      alb.ingress.kubernetes.io/ssl-redirect: '443',
+      alb.ingress.kubernetes.io/tags: "chapter=devops,environment=dev,service=prometheus"
+    }
+    hosts:
+      - dev.prometheus.yieon.com
+    paths:
+      - "/*"
+
+  prometheusSpec:
+    replicas: 2
+    shards: 2
+    securityContext:
+      runAsNonRoot: false
+      runAsUser: 0
+      fsGroup: 0
+    additionalScrapeConfigs:
+      - job_name: 'kubernetes-ingresses'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        kubernetes_sd_configs:
+          - role: ingress
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_ingress_scheme,__address__]
+            regex: (.+);(.+)
+            replacement: ${1}://${2}
+            target_label: __param_target
+          - target_label: __address__
+            replacement: prometheus-blackbox-exporter:9115
+          - source_labels: [__param_target]
+            target_label: instance
+          - action: labelmap
+            regex: __meta_kubernetes_ingress_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_ingress_name]
+            target_label: ingress
+      - job_name: pushgateway
+        honor_labels: true
+        static_configs:
+          - targets: [prometheus-pushgateway:9091]
+    thanos:
+      image: XXXXXXXXXXXX.dkr.ecr.ap-northeast-2.amazonaws.com/thanos:v0.34.1
+      objectStorageConfig:
+        existingSecret:
+          name: thanos-objstore-config
+          key: objstore.yml
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ""
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Gi
+          selector:
+            matchLabels:
+              type: prometheus
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: topology.kubernetes.io/zone
+                  operator: In
+                  values:
+                    - ap-northeast-2a
+                - key: eks.amazonaws.com/nodegroup
+                  operator: In
+                  values:
+                    - monitoring
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - arm64
+    podAntiAffinity: hard
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            prometheus: prometheus-operator-prometheus
+    tolerations:
+      - key: system-type
+        operator: Equal
+        value: monitoring
+        effect: NoSchedule
+      - key: arch-type
+        operator: Equal
+        value: arm
+        effect: NoSchedule
+  thanosService:
+    enabled: true

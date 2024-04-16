@@ -1,0 +1,107 @@
+affinity: {}
+
+topologySpreadConstraints: []
+
+image:
+  repository: registry.k8s.io/prometheus-adapter/prometheus-adapter
+  tag: v0.11.0
+  pullPolicy: IfNotPresent
+
+logLevel: 4
+
+namespaceOverride: monitoring
+
+metricsRelistInterval: 1m
+
+listenPort: 6443
+
+runAsUser: 10001
+
+nodeSelector:
+  eks.amazonaws.com/nodegroup: monitoring
+  kubernetes.io/arch: arm64
+
+prometheus:
+  url: http://prometheus-operator-prometheus.monitoring.svc.cluster.local
+  port: 9090
+  path: "/"
+
+replicas: 1
+
+# k8s 1.21 needs fsGroup to be set for non root deployments
+# ref: https://github.com/kubernetes/kubernetes/issues/70679
+podSecurityContext:
+  fsGroup: 10001
+
+rbac:
+  create: true
+
+psp:
+  create: false
+
+serviceAccount:
+  create: true
+
+dnsConfig: {}
+
+resources: {}
+
+rules:
+  default: false 
+  # ingress latency rules
+  custom: 
+  - seriesQuery: '{__name__=~"^probe_http_duration_seconds.*",app!="",namespace!="",ingress!=""}' 
+    resources:
+      template: <<.Resource>>
+      overrides:
+        namespace:
+          resource: "namespace"
+        ingress:
+          resource: "ingress"
+    name:
+      matches: "" 
+      as: ""
+    metricsQuery: avg(<<.Series>>{<<.LabelMatchers>>}) by (namespace, ingress)
+  existing:
+  # push gateway metric rules
+  external:
+  - metricsQuery: <<.Series>>
+    resources:
+      template: <<.Resource>>
+    seriesQuery: '{__name__=~"^message_ready_count.*"}'
+
+service:
+  annotations: {}
+  port: 443
+  type: ClusterIP
+
+tls:
+  enable: false
+
+# Any extra arguments
+extraArguments: []
+
+# Any extra volumes
+extraVolumes: []
+
+# Any extra volume mounts
+extraVolumeMounts: []
+
+tolerations:
+  - key: system-type
+    operator: Equal
+    value: monitoring
+    effect: NoSchedule
+  - key: arch-type
+    operator: Equal
+    value: arm
+    effect: NoSchedule
+
+# Labels added to the pod
+podLabels: {}
+
+# Annotations added to the pod
+podAnnotations: {}
+
+hostNetwork:
+  enabled: false

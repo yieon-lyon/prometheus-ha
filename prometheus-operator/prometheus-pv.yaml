@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-prometheus
+  labels:
+    type: prometheus
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-XXXXXXXXXXXXXXXX1
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-prometheus-1
+  labels:
+    type: prometheus
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-XXXXXXXXXXXXXXXX2
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-prometheus-2
+  labels:
+    type: prometheus
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-XXXXXXXXXXXXXXXX3
+  capacity:
+    storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-prometheus-3
+  labels:
+    type: prometheus
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-XXXXXXXXXXXXXXXX4
+  capacity:
+    storage: 100Gi
