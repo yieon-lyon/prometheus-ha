@@ -96,20 +96,15 @@ ruler:
   enabled: false
 receive:
   enabled: false
-  nodeSelector:
-    eks.amazonaws.com/nodegroup: monitoring
-    kubernetes.io/arch: arm64
-  tolerations:
-    - key: system-type
-      operator: Equal
-      value: monitoring
-      effect: NoSchedule
-    - key: arch-type
-      operator: Equal
-      value: arm
-      effect: NoSchedule
 metrics:
-  enabled: false
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: false
+    default:
+      sidecarJobRegex: ".*thanos-sidecar.*"
+      create: true
 volumePermissions:
   enabled: false
 minio:
