@@ -52,6 +52,7 @@ loki:
       effect: NoSchedule
 
 lokiCanary:
+  priorityClassName: system-cluster-critical
   nodeSelector:
     eks.amazonaws.com/nodegroup: monitoring
     kubernetes.io/arch: arm64
