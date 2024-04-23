@@ -3,6 +3,7 @@ kubectl -n monitoring create secret generic thanos-objstore-config --from-file=o
 
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts #prometheus
 helm repo add bitnami https://charts.bitnami.com/bitnami #thanos
+helm repo add grafana https://grafana.github.io/helm-charts #loki-3 & promtail
 
 helm repo update
 
