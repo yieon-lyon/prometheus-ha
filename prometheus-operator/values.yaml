@@ -42,6 +42,12 @@ grafana:
       uid: thanos
       url: http://thanos-query:9090
       access: proxy
+    - name: Loki
+      type: loki
+      uid: loki
+      orgId: 1
+      url: http://loki-gateway
+      access: proxy
   ingress:
     enabled: true
     annotations: {

@@ -12,6 +12,8 @@ PROMETHEUS_ADAPTOR_VERSION="4.4.1"
 PROMETHEUS_BLACK_BOX_EXPORTER_VERSION="8.3.0"
 PROMETHEUS_PUSHGATEWAY_VERSION="2.4.0"
 THANOS_VERSION="15.0.5"
+LOKI_VERSION="6.3.3"
+PROMTAIL_VERSION="6.15.5"
 VALUES_PATH="values.yaml"
 
 # prometheus-operator
@@ -43,3 +45,15 @@ helm install thanos -n monitoring \
     bitnami/thanos \
     --version THANOS_VERSION \
     --values "thanos/${VALUES_PATH}"
+
+# loki
+helm install loki -n monitoring \
+    grafana/loki \
+    --version $LOKI_VERSION |
+    --values "loki/${VALUES_PATH}"
+
+# promtail
+helm install promtail -n monitoring \
+    grafana/promtail \
+    --version $PROMTAIL_VERSION |
+    --values "promtail/${VALUES_PATH}"

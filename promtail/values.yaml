@@ -1,0 +1,48 @@
+daemonset:
+  enabled: false
+
+deployment:
+  # -- Deploys Promtail as a Deployment
+  enabled: true
+  replicaCount: 2
+  autoscaling:
+    # -- Creates a HorizontalPodAutoscaler for the deployment
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage:
+    # behavior: {}
+
+    # -- Set deployment object update strategy
+    strategy:
+      type: RollingUpdate
+
+config:
+  enabled: true
+  logLevel: info
+  logFormat: logfmt
+  serverPort: 3101
+  clients:
+    - url: http://loki-gateway/loki/api/v1/push
+      tenant_id: 1
+
+nodeSelector:
+  eks.amazonaws.com/nodegroup: monitoring
+  kubernetes.io/arch: arm64
+
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: system-type
+    operator: Equal
+    value: monitoring
+    effect: NoSchedule
+  - key: arch-type
+    operator: Equal
+    value: arm
+    effect: NoSchedule
