@@ -8,7 +8,7 @@ helm repo add grafana https://grafana.github.io/helm-charts #loki-3 & promtail
 helm repo update
 
 # Chart Versions
-PROMETHEUS_OPERATOR_VERSION="57.2.0"
+PROMETHEUS_OPERATOR_VERSION="58.2.2"
 PROMETHEUS_ADAPTOR_VERSION="4.4.1"
 PROMETHEUS_BLACK_BOX_EXPORTER_VERSION="8.3.0"
 PROMETHEUS_PUSHGATEWAY_VERSION="2.4.0"
