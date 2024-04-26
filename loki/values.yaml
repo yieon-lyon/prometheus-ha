@@ -34,10 +34,7 @@ loki:
       admin: loki-logs
     type: s3
     s3:
-      endpoint: s3.ap-northeast-2.amazonaws.com
       region: ap-northeast-2
-      accessKeyId: {YOUR_ACCESS_KEY}
-      secretAccessKey: {YOUR_SECRET_KEY}
   nodeSelector:
     eks.amazonaws.com/nodegroup: monitoring
     kubernetes.io/arch: arm64
@@ -65,6 +62,10 @@ lokiCanary:
       operator: Equal
       value: arm
       effect: NoSchedule
+
+serviceAccount:
+  annotations:
+    "eks.amazonaws.com/role-arn": "arn:aws:iam::{YOUR_ACCOUNT}:role/{YOUR_ROLE}"
 
 gateway:
   enabled: true

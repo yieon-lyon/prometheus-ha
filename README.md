@@ -22,8 +22,8 @@
   - check thanos image
 
 [x] loki/values.yaml
-  - access_key: {YOUR_ACCESS_KEY}
-  - secret_key: {YOUR_SECRET_KEY}
+  - {YOUR_ACCOUNT}
+  - {YOUR_ROLE}
 
 ## Install
 ```bash
